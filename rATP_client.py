@@ -31,27 +31,43 @@ def main(args):
     parser.add_argument("-p",help="server port (default 10000)",default=10000)
     args,unknown = parser.parse_known_args()
 
-    # Connecting to server
     print "Connecting to server...",
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((args.server,int(args.p)))
         print "OK"
 
-        # Sending ATP file
+        print "Reding ATP file...",
         try:
             atp_file = open(args.atp_file,'r')
-            sock.sendall(args.atp_file)
-            sock.sendall(atp_file.read())
-            
+            print "OK"
+
         except:
             print "ATP file not found!"
             sys.exit()
 
+        print "Sending ATP file...",
+        sock.sendall(args.atp_file)
+        sock.sendall(atp_file.read())
+        atp_file.close()
+        print "OK"
+
+        print "Waiting for the results...",
+        fp_res = open('resultado.zip','wb+')
+        while True:
+            res_chunk = sock.recv(1024)
+            if res_chunk:
+                fp_res.write(bytearray(res_chunk))
+            else:
+                break
+
+        fp_res.close()
+        print "OK"
+
         # Close server connection
         sock.close()
     except:
-        print "FAIL! Server not found!"
+        print "ERROR!"
 
     return(0)
 

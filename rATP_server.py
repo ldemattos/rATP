@@ -25,6 +25,15 @@ import subprocess
 import os
 import shutil
 
+def readChunks(fp, chunk_size=1024):
+    """Lazy function (generator) to read a file piece by piece.
+    Default chunk size: 1k."""
+    while True:
+        data = fp.read(chunk_size)
+        if not data:
+            break
+        yield data
+
 def main(args):
 
     # Read server conf file
@@ -34,7 +43,7 @@ def main(args):
     print "OK"
 
     # Server settings
-    print "Opening listening port...",
+    print "Binding port...",
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server = (parser.get('main', 'address'),int(parser.get('main', 'port')))
     sock.bind(server)
@@ -48,7 +57,7 @@ def main(args):
     try:
         print "Receiving ATP file...",
         atp_file_name = os.path.basename(connection.recv(1024))
-        atp_file = connection.recv(1000000)
+        atp_file = connection.recv(1024)
         atp_hash = hashlib.md5(atp_file).hexdigest()
         print "OK"
 
@@ -70,19 +79,25 @@ def main(args):
         subprocess.call(cmd,shell=True)
         print "OK"
 
-        print "Compressing results..."
+        print "Compressing results...",
         shutil.make_archive(parser.get('ATP', 'workdir')+'/'+atp_hash, 'zip', parser.get('ATP', 'workdir'), base_dir=atp_hash)
         print "OK"
 
+        print "Sending back the results...",
+        res_file = parser.get('ATP', 'workdir')+'/'+atp_hash+'.zip'
+        fp_res = open(res_file,'rb')
+        for chunk in readChunks(fp_res):
+            connection.sendall(chunk)
 
+        fp_res.close()
+        print "OK"
 
-
-        # print "Processing ATP data case..."
-        #
-        # cmd = 'mkdir '+atp_root+'; cd '+atp_root+'; runtp_mod +
-        # arquivoATP = arquivoATP + '-' + threadNum + '.atp'
+        # print "Cleaning cache...",
+        # cmd = 'rm -rf '+atp_root+'; rm -f '+atp_root[0:-1]+'.zip'
         # subprocess.call(cmd,shell=True)
+        # print "OK"
 
+        print "EOL"
 
     finally:
         connection.close()
