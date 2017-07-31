@@ -18,8 +18,42 @@
 #     You should have received a copy of the GNU Affero General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
+import socket
+import sys
+
 def main(args):
-	return 0
+
+    # Input arguments
+    parser = argparse.ArgumentParser(description='rATP Client',prog='rATP')
+    parser.add_argument("server",help="server address")
+    parser.add_argument("atp_file",help="ATP File")
+    parser.add_argument("-p",help="server port (default 10000)",default=10000)
+    args,unknown = parser.parse_known_args()
+
+    # Connecting to server
+    print "Connecting to server...",
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.connect((args.server,int(args.p)))
+        print "OK"
+
+        # Sending ATP file
+        try:
+            atp_file = open(args.atp_file,'r')
+            sock.sendall(args.atp_file)
+            sock.sendall(atp_file.read())
+            
+        except:
+            print "ATP file not found!"
+            sys.exit()
+
+        # Close server connection
+        sock.close()
+    except:
+        print "FAIL! Server not found!"
+
+    return(0)
 
 if __name__ == '__main__':
 	import sys
