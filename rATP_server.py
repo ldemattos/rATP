@@ -57,7 +57,7 @@ def main(args):
     try:
         print "Receiving ATP file...",
         atp_file_name = os.path.basename(connection.recv(1024))
-        atp_file = connection.recv(1024)
+        atp_file = connection.recv(1024000)
         atp_hash = hashlib.md5(atp_file).hexdigest()
         print "OK"
 
@@ -92,15 +92,18 @@ def main(args):
         fp_res.close()
         print "OK"
 
-        # print "Cleaning cache...",
-        # cmd = 'rm -rf '+atp_root+'; rm -f '+atp_root[0:-1]+'.zip'
-        # subprocess.call(cmd,shell=True)
-        # print "OK"
+        print "Cleaning temporary files...",
+        cmd = 'rm -rf '+atp_root[0:-1]+'*;'
+        subprocess.call(cmd,shell=True)
+        print "OK"
 
         print "EOL"
 
     finally:
         connection.close()
+
+    # Finish server
+    sock.close()
 
     return(0)
 

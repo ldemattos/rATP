@@ -28,7 +28,7 @@ def main(args):
     parser = argparse.ArgumentParser(description='rATP Client',prog='rATP')
     parser.add_argument("server",help="server address")
     parser.add_argument("atp_file",help="ATP File")
-    parser.add_argument("-p",help="server port (default 10000)",default=10000)
+    parser.add_argument("-p",help="server port (default 2207)",default=2207)
     args,unknown = parser.parse_known_args()
 
     print "Connecting to server...",
