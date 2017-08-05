@@ -23,6 +23,7 @@ import hashlib
 import subprocess
 import os
 import shutil
+from time import strftime
 
 def readChunks(fp, chunk_size=1024):
     """Lazy function (generator) to read a file piece by piece.
@@ -42,9 +43,9 @@ def srvWorker(connection,workdir,atp_exec):
         print "OK"
 
         print "Write ATP file to disk...",
-        atp_root = workdir +'/'+ atp_hash +'/'
-        cmd = 'mkdir '+atp_root
-        subprocess.call(cmd,shell=True)
+        atp_root = workdir +'/rATP_'+ strftime("%H%M%S_%d%m%y") +'/'
+        if not os.path.exists(atp_root):
+            os.makedirs(atp_root)
         try:
             fp_atp = open(atp_root+atp_file_name,'w+')
             fp_atp.write("%s"%(atp_file))
@@ -55,16 +56,16 @@ def srvWorker(connection,workdir,atp_exec):
             print "ERROR"
 
         print "Processing ATP data case...",
-        cmd = 'cd '+atp_root+'; '+atp_exec+' '+atp_file_name        
+        cmd = 'cd '+atp_root+'; '+atp_exec+' '+atp_file_name
         subprocess.call(cmd,shell=True)
         print "OK"
 
         print "Compressing results...",
-        shutil.make_archive(workdir+'/'+atp_hash, 'zip', workdir, base_dir=atp_hash)
+        shutil.make_archive(atp_root, 'zip', workdir, base_dir='rATP_'+ strftime("%H%M%S_%d%m%y"))
         print "OK"
 
         print "Sending back the results...",
-        res_file = workdir+'/'+atp_hash+'.zip'
+        res_file = atp_root[0:-1]+'.zip'
         fp_res = open(res_file,'rb')
         for chunk in readChunks(fp_res):
             connection.sendall(chunk)
